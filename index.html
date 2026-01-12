@@ -465,6 +465,9 @@
 </head>
 <body>
 
+    <!-- Background Music -->
+    <audio id="bgMusic" src="Stranger Synth Vibes.wav" loop></audio>
+
     <div class="scanlines"></div>
     <div id="sporeContainer"></div>
 
@@ -558,6 +561,7 @@
         const inputBreaks = document.getElementById('inputBreaks');
         
         const tallyContainer = document.getElementById('tallyContainer');
+        const bgMusic = document.getElementById('bgMusic');
 
         let totalTimeSeconds = 0;
         let remainingSeconds = 0;
@@ -647,6 +651,8 @@
                 audioCtx.resume().catch(e => console.log(e));
             }
 
+            bgMusic.play().catch(e => console.log("Music error:", e));
+
             if (!isRunning) {
                 if (remainingSeconds === 0) {
                     // Initialize
@@ -714,6 +720,7 @@
             startBtn.disabled = false;
             startBtn.textContent = "RESUME";
             pauseBtn.disabled = true;
+            bgMusic.pause();
         }
 
         function finishTimer() {
@@ -722,6 +729,9 @@
             updateDisplay();
             progressBar.style.width = '100%'; // Full bar on completion
             
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+
             // Play Alarm (Custom Monster or Default Synth)
             if (customAlarmBuffer) {
                 playMonsterAudio();
@@ -748,6 +758,9 @@
 
         function stopTimer() {
             pauseTimer();
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+
             // Reset to the beginning of the CURRENT session
             if (totalTimeSeconds > 0) {
                 remainingSeconds = totalTimeSeconds;
@@ -774,6 +787,9 @@
 
         function resetTimer() {
             pauseTimer();
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+
             remainingSeconds = 0;
             totalTimeSeconds = 0;
             updateDisplayFromInputs(); 
