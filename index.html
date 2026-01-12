@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stranger Times</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Benguiat+ITC&family=Libre+Baskerville:wght@700&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050510;
+            --void-color: #000000;
+            --stranger-red: #ff1e1e;
+            --stranger-glow: #bd0000;
+            --text-stroke: #ff1e1e;
+            --dim-red: #3b0000;
+            --particle-color: rgba(200, 200, 200, 0.3);
+        }
+        
+        html {
+            overflow: hidden;
+            height: 100%;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+            color: var(--stranger-red);
+            font-family: 'VT323', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            position: fixed; /* Locks the screen preventing ANY scroll */
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        #sporeContainer {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* The Upside Down Spores Effect */
+        .spore {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: float 10s infinite linear;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+            50% { opacity: 0.8; }
+            100% { transform: translateY(-10vh) translateX(20px); opacity: 0; }
+        }
+
+        /* Scanline Overlay */
+        .scanlines {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 5;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .container {
+            z-index: 10;
+            text-align: center;
+            border: 3px solid var(--dim-red);
+            padding: 40px;
+            border-radius: 4px;
+            box-shadow: 0 0 30px var(--dim-red), inset 0 0 50px rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.7);
+            max-width: 650px;
+            width: 90%;
+            position: relative;
+            backdrop-filter: blur(2px);
+            margin: 20px;
+        }
+
+        /* Title styling mimicking the show's opening */
+        h1 {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 3rem;
+            margin-top: 0;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            color: transparent;
+            -webkit-text-stroke: 2px var(--stranger-red);
+            text-shadow: 0 0 15px var(--stranger-glow);
+            position: relative;
+            animation: flicker 5s infinite;
+        }
+        
+        /* The lines above/below title */
+        h1::before, h1::after {
+            content: '';
+            display: block;
+            height: 2px;
+            background: var(--stranger-red);
+            box-shadow: 0 0 10px var(--stranger-glow);
+            width: 100%;
+            margin: 5px 0;
+        }
+
+        .timer-display {
+            font-size: 8rem;
+            line-height: 0.9;
+            margin: 10px 0;
+            color: var(--stranger-red);
+            text-shadow: 0 0 20px var(--stranger-glow), 0 0 40px var(--stranger-glow);
+            user-select: none;
+            letter-spacing: 5px;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background: var(--dim-red);
+            margin: 20px 0;
+            border-radius: 2px;
+            box-shadow: inset 0 0 5px black;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 100%;
+            background: var(--stranger-red);
+            box-shadow: 0 0 15px var(--stranger-red);
+            transition: width 1s linear;
+        }
+
+        .input-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            align-items: center;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        label {
+            color: #aaa;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        input {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--stranger-red);
+            color: var(--stranger-red);
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            padding: 5px;
+            width: 70px;
+            text-align: center;
+            outline: none;
+            box-shadow: 0 0 5px var(--dim-red);
+        }
+
+        .presets {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            font-size: 1rem;
+            padding: 5px 15px;
+            border: 1px solid #555;
+            color: #888;
+            background: transparent;
+            cursor: pointer;
+            font-family: 'Libre Baskerville', serif;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--stranger-red);
+            color: var(--stranger-red);
+            text-shadow: 0 0 5px var(--stranger-glow);
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            background: rgba(20, 0, 0, 0.8);
+            padding: 15px 25px;
+            border-radius: 4px;
+            border: 1px solid var(--dim-red);
+            box-shadow: 0 0 20px var(--dim-red);
+        }
+
+        /* Red Tape Deck Keys */
+        button.main-btn {
+            background: #050505;
+            border: 1px solid var(--stranger-red);
+            border-bottom: 4px solid var(--dim-red);
+            color: var(--stranger-red);
+            font-family: 'VT323', monospace;
+            font-weight: bold;
+            font-size: 2rem;
+            width: 70px;
+            height: 60px;
+            cursor: pointer;
+            text-shadow: 0 0 10px var(--stranger-glow);
+            box-shadow: 0 5px 10px rgba(255,0,0,0.1);
+            transition: all 0.1s;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        button.main-btn:hover {
+            background: #1a0000;
+            box-shadow: 0 0 15px var(--stranger-red);
+        }
+
+        button.main-btn:active, button.main-btn.pressed {
+            transform: translateY(4px);
+            border-bottom: 1px solid var(--stranger-red);
+            box-shadow: inset 0 2px 10px rgba(255,0,0,0.5);
+            background: #2a0000;
+        }
+
+        button.main-btn:disabled {
+            opacity: 0.2;
+            filter: grayscale(1);
+        }
+
+        /* All symbols match the theme */
+        #startBtn, #stopBtn, #pauseBtn, #resetBtn {
+            color: var(--stranger-red);
+        }
+
+        .recorder-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        #recBtn {
+            background: transparent;
+            border: 1px solid var(--dim-red);
+            color: var(--dim-red);
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px 15px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #recBtn:hover {
+            color: var(--stranger-red);
+            border-color: var(--stranger-red);
+            text-shadow: 0 0 10px var(--stranger-glow);
+            box-shadow: 0 0 10px var(--dim-red);
+        }
+
+
+        .status-message {
+            height: 30px;
+            font-family: 'Libre Baskerville', serif;
+            font-size: 1.2rem;
+            margin-top: 15px;
+            color: white;
+            text-shadow: 0 0 10px white;
+            letter-spacing: 2px;
+            visibility: hidden;
+            text-transform: uppercase;
+        }
+
+        .hidden { display: none !important; }
+        
+        /* TALLY SCOREBOARD STYLES */
+        .tally-section {
+            margin-top: 40px;
+            border-top: 1px solid var(--dim-red);
+            padding-top: 20px;
+            position: relative;
+        }
+
+        .tally-header {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .tally-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            min-height: 40px;
+        }
+
+        .tally-group {
+            position: relative;
+            width: 40px;
+            height: 35px;
+        }
+
+        .tally-mark {
+            position: absolute;
+            background-color: var(--stranger-red);
+            box-shadow: 0 0 5px var(--stranger-red);
+            border-radius: 2px;
+            opacity: 0.9;
+        }
+
+        /* Vertical Lines */
+        .mark-v {
+            width: 3px;
+            height: 100%;
+            top: 0;
+        }
+        .mark-1 { left: 10%; transform: rotate(-2deg); }
+        .mark-2 { left: 35%; transform: rotate(1deg); }
+        .mark-3 { left: 60%; transform: rotate(-3deg); }
+        .mark-4 { left: 85%; transform: rotate(2deg); }
+        
+        /* The Crossing Line */
+        .mark-cross {
+            width: 110%;
+            height: 3px;
+            top: 50%;
+            left: -5%;
+            transform: rotate(-25deg);
+        }
+
+        .reset-tally-btn {
+            margin-top: 15px;
+            background: transparent;
+            border: none;
+            color: #444;
+            font-family: 'VT323', monospace;
+            cursor: pointer;
+            font-size: 1rem;
+            text-decoration: underline;
+        }
+        .reset-tally-btn:hover { color: var(--stranger-red); }
+
+        /* Flicker animation for title */
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+            20%, 24%, 55% { opacity: 0.4; }
+        }
+
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem; /* Smaller title */
+                margin-bottom: 20px;
+            }
+            
+            .container {
+                padding: 20px; /* Less padding on mobile */
+                width: 95%; /* Use more screen width */
+                border-width: 2px;
+            }
+
+            .timer-display {
+                font-size: 18vw; /* Scales with screen width */
+                margin: 10px 0;
+            }
+
+            .input-group {
+                gap: 5px;
+            }
+
+            .input-group div {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            input {
+                width: 50px;
+                font-size: 1.2rem;
+            }
+
+            .presets {
+                gap: 5px;
+            }
+
+            .preset-btn {
+                font-size: 0.8rem;
+                padding: 5px 10px;
+                flex-grow: 1; /* Buttons fill width */
+            }
+
+            button.main-btn {
+                font-size: 1.4rem;
+                padding: 10px 20px;
+                width: 100%; /* Full width buttons for easy tapping */
+            }
+
+            .buttons {
+                flex-direction: column; /* Stack buttons vertically */
+                gap: 10px;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <div id="sporeContainer"></div>
+
+    <div class="container">
+        <h1>STRANGER TIMES</h1>
+
+        <div class="presets" id="presetContainer">
+            <button class="preset-btn" onclick="applyPreset(0, 25, 0)">Mind Flayer (25m)</button>
+            <button class="preset-btn" onclick="applyPreset(1, 30, 1)">Hawkins Lab (90m)</button>
+            <button class="preset-btn" onclick="applyPreset(3, 0, 2)">D&D Campaign (3h)</button>
+        </div>
+
+        <div class="input-group" id="setupPanel">
+            <div>
+                <label>HRS</label><br>
+                <input type="number" id="inputHours" value="0" min="0" max="24">
+            </div>
+            <div>
+                <label>MIN</label><br>
+                <input type="number" id="inputMinutes" value="25" min="0" max="59">
+            </div>
+            <div>
+                <label>BREAKS</label><br>
+                <input type="number" id="inputBreaks" value="0" min="0" max="10">
+            </div>
+        </div>
+
+        <div class="timer-display" id="display">00:00:00</div>
+        
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="status-message" id="statusMessage">THE GATE IS OPEN</div>
+
+        <div class="buttons">
+            <button class="main-btn" id="startBtn" title="PLAY">▶</button>
+            <button class="main-btn" id="pauseBtn" disabled title="PAUSE">❚❚</button>
+            <button class="main-btn" id="stopBtn" disabled title="STOP">■</button>
+            <button class="main-btn" id="resetBtn" title="EJECT/RESET">⏏</button>
+        </div>
+
+        <!-- CUSTOM MONSTER ALARM SECTION -->
+        <div class="recorder-container">
+            <button id="recBtn">
+                ● RECORD CUSTOM ALARM
+            </button>
+            <button id="resetRecBtn" title="DELETE RECORDING" style="display: none; background: transparent; border: 1px solid #444; color: #666; font-family: 'VT323'; cursor: pointer; padding: 8px 10px; margin-left: 5px;">
+                X
+            </button>
+            <div id="recStatus" style="color: var(--stranger-red); font-size: 0.9rem; margin-top: 5px; visibility: hidden;">RECORDING...</div>
+        </div>
+
+        <!-- NEW SCOREBOARD SECTION -->
+        <div class="tally-section">
+            <div class="tally-header">Sessions Survived</div>
+            <div class="tally-container" id="tallyContainer">
+                <!-- Tally marks go here -->
+            </div>
+            <button class="reset-tally-btn" onclick="resetTally()">Clear History</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Spore Generation ---
+        const sporeContainer = document.getElementById('sporeContainer');
+        for(let i=0; i<30; i++) {
+            let s = document.createElement('div');
+            s.className = 'spore';
+            s.style.left = Math.random() * 100 + 'vw';
+            s.style.width = Math.random() * 4 + 1 + 'px';
+            s.style.height = s.style.width;
+            s.style.animationDuration = (Math.random() * 10 + 5) + 's';
+            s.style.animationDelay = (Math.random() * 5) + 's';
+            sporeContainer.appendChild(s);
+        }
+
+        // --- Timer Logic ---
+        const display = document.getElementById('display');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const setupPanel = document.getElementById('setupPanel');
+        const presetContainer = document.getElementById('presetContainer');
+        const statusMessage = document.getElementById('statusMessage');
+        const progressBar = document.getElementById('progressBar');
+        
+        const inputHours = document.getElementById('inputHours');
+        const inputMinutes = document.getElementById('inputMinutes');
+        const inputBreaks = document.getElementById('inputBreaks');
+        
+        const tallyContainer = document.getElementById('tallyContainer');
+
+        let totalTimeSeconds = 0;
+        let remainingSeconds = 0;
+        let breakPoints = [];
+        let timerInterval = null;
+        let isRunning = false;
+        let expectedEndTime = 0; 
+
+        // Load saved session count
+        let sessionCount = parseInt(localStorage.getItem('strangerSessionCount') || '0');
+        renderTally();
+        
+        // Audio
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playRetroSynth(freq = 150, type = 'sawtooth', dur = 0.5) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(freq/2, audioCtx.currentTime + dur);
+
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + dur);
+        }
+
+        function applyPreset(h, m, b) {
+            inputHours.value = h;
+            inputMinutes.value = m;
+            inputBreaks.value = b;
+            updateDisplayFromInputs();
+        }
+
+        function updateDisplay() {
+            display.textContent = formatTime(remainingSeconds);
+        }
+
+        function updateDisplayFromInputs() {
+            let h = parseInt(inputHours.value) || 0;
+            let m = parseInt(inputMinutes.value) || 0;
+            display.textContent = formatTime((h*3600) + (m*60));
+        }
+
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function calculateBreakPoints(totalSecs, numBreaks) {
+            let points = [];
+            if (numBreaks > 0) {
+                const interval = Math.floor(totalSecs / (parseInt(numBreaks) + 1));
+                for (let i = 1; i <= numBreaks; i++) {
+                    points.push(totalSecs - (interval * i)); 
+                }
+            }
+            return points;
+        }
+
+        function updateProgress() {
+            if (totalTimeSeconds > 0) {
+                // Inverted: Fill from 0% to 100%
+                const pct = ((totalTimeSeconds - remainingSeconds) / totalTimeSeconds) * 100;
+                progressBar.style.width = pct + '%';
+            } else {
+                progressBar.style.width = '0%';
+            }
+        }
+
+        function startTimer() {
+            // Resume audio safely (don't block)
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(e => console.log(e));
+            }
+
+            if (!isRunning) {
+                if (remainingSeconds === 0) {
+                    // Initialize
+                    const h = parseInt(inputHours.value) || 0;
+                    const m = parseInt(inputMinutes.value) || 0;
+                    const b = parseInt(inputBreaks.value) || 0;
+                    
+                    totalTimeSeconds = (h * 3600) + (m * 60);
+                    
+                    // FIX: If user sets 00:00:00, default to 1 second for "Instant Test" mode
+                    if (totalTimeSeconds <= 0) {
+                        totalTimeSeconds = 1;
+                    }
+
+                    remainingSeconds = totalTimeSeconds;
+                    breakPoints = calculateBreakPoints(totalTimeSeconds, b);
+                    setupPanel.classList.add('hidden');
+                    presetContainer.classList.add('hidden');
+                    
+                    // Update visual immediately so user knows it started
+                    updateDisplay();
+                    updateProgress();
+                }
+
+                // Set up Delta Timing
+                expectedEndTime = Date.now() + (remainingSeconds * 1000);
+                
+                isRunning = true;
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                stopBtn.disabled = false;
+                statusMessage.style.visibility = 'hidden';
+
+                timerInterval = setInterval(() => {
+                    const now = Date.now();
+                    const secondsLeft = Math.ceil((expectedEndTime - now) / 1000);
+                    remainingSeconds = secondsLeft;
+
+                    updateDisplay();
+                    updateProgress();
+                    
+                    if (breakPoints.includes(remainingSeconds)) {
+                        triggerBreak();
+                    }
+
+                    if (remainingSeconds <= 0) {
+                        finishTimer();
+                    }
+                }, 1000); 
+            }
+        }
+
+        function triggerBreak() {
+            pauseTimer();
+            playRetroSynth(100, 'square', 1.0); 
+            statusMessage.textContent = "THE GATE IS OPEN (BREAK)";
+            statusMessage.style.visibility = 'visible';
+            statusMessage.style.color = '#fff';
+            breakPoints = breakPoints.filter(bp => bp !== remainingSeconds);
+        }
+
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            startBtn.disabled = false;
+            startBtn.textContent = "RESUME";
+            pauseBtn.disabled = true;
+        }
+
+        function finishTimer() {
+            clearInterval(timerInterval);
+            remainingSeconds = 0;
+            updateDisplay();
+            progressBar.style.width = '100%'; // Full bar on completion
+            
+            // Play Alarm (Custom Monster or Default Synth)
+            if (customAlarmBuffer) {
+                playMonsterAudio();
+            } else {
+                playRetroSynth(50, 'sawtooth', 2.0); 
+            }
+            
+            statusMessage.textContent = "TIME ENDED - YOU SURVIVED";
+            statusMessage.style.visibility = 'visible';
+            statusMessage.style.color = 'var(--stranger-red)';
+            
+            startBtn.textContent = "START";
+            startBtn.disabled = false;
+            setupPanel.classList.remove('hidden');
+            presetContainer.classList.remove('hidden');
+            isRunning = false;
+            totalTimeSeconds = 0;
+            
+            // Increment Tally
+            sessionCount++;
+            localStorage.setItem('strangerSessionCount', sessionCount);
+            renderTally();
+        }
+
+        function stopTimer() {
+            pauseTimer();
+            // Reset to the beginning of the CURRENT session
+            if (totalTimeSeconds > 0) {
+                remainingSeconds = totalTimeSeconds;
+            } else {
+                // If somehow total is 0 (shouldn't happen if running), re-read inputs
+                let h = parseInt(inputHours.value) || 0;
+                let m = parseInt(inputMinutes.value) || 0;
+                totalTimeSeconds = (h * 3600) + (m * 60);
+                if (totalTimeSeconds <= 0) totalTimeSeconds = 1;
+                remainingSeconds = totalTimeSeconds;
+            }
+
+            updateDisplay();
+            progressBar.style.width = '0%';
+            
+            startBtn.textContent = "START";
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            stopBtn.disabled = true;
+            statusMessage.style.visibility = 'hidden';
+            
+            // We do NOT show the setup panel, allowing quick restart of same session
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            remainingSeconds = 0;
+            totalTimeSeconds = 0;
+            updateDisplayFromInputs(); 
+            progressBar.style.width = '0%'; // Reset to empty
+            setupPanel.classList.remove('hidden');
+            presetContainer.classList.remove('hidden');
+            startBtn.textContent = "START";
+            statusMessage.style.visibility = 'hidden';
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        }
+
+        // --- Monster Voice Recorder Logic ---
+        const recBtn = document.getElementById('recBtn');
+        const resetRecBtn = document.getElementById('resetRecBtn');
+        const recStatus = document.getElementById('recStatus');
+        let mediaRecorder;
+        let audioChunks = [];
+        let customAlarmBuffer = null;
+        let isRecording = false;
+
+        recBtn.addEventListener('click', async () => {
+            // CASE 1: PREVIEW MODE (Recording exists)
+            if (customAlarmBuffer) {
+                playMonsterAudio();
+                return;
+            }
+
+            // CASE 2: STOP RECORDING
+            if (isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                recBtn.style.color = "#666";
+                recBtn.style.borderColor = "#444";
+                return;
+            }
+
+            // CASE 3: START RECORDING (Ask for Mic)
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const arrayBuffer = await audioBlob.arrayBuffer();
+                    customAlarmBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                    
+                    // Update UI to Preview Mode
+                    recBtn.textContent = "▶ PREVIEW MONSTER";
+                    recBtn.style.color = "var(--stranger-red)";
+                    recBtn.style.borderColor = "var(--stranger-red)";
+                    
+                    resetRecBtn.style.display = "inline-block"; // Show delete button
+                    recStatus.style.visibility = 'hidden';
+                    
+                    // Stop all tracks to release mic
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                recBtn.textContent = "■ STOP RECORDING";
+                recBtn.style.color = "var(--stranger-red)";
+                recBtn.style.borderColor = "var(--stranger-red)";
+                recStatus.style.visibility = 'visible';
+            } catch (err) {
+                alert("Mic access needed to record monster voice!");
+            }
+        });
+
+        // Delete Recording Logic
+        resetRecBtn.addEventListener('click', () => {
+            customAlarmBuffer = null;
+            recBtn.textContent = "● RECORD CUSTOM ALARM";
+            recBtn.style.color = "var(--dim-red)";
+            recBtn.style.borderColor = "var(--dim-red)";
+            resetRecBtn.style.display = "none";
+        });
+
+        // Generate Brown Noise (Deep Rumble)
+        function createBrownNoise(ctx) {
+            const bufferSize = ctx.sampleRate * 4; // 4 seconds
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            let lastOut = 0;
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                lastOut = (lastOut + (0.02 * white)) / 1.02;
+                data[i] = lastOut * 3.5; 
+            }
+            return buffer;
+        }
+
+        // The "Monster" Effect Chain
+        function playMonsterAudio() {
+            if (!customAlarmBuffer) return;
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            // --- VOICE ---
+            const source = audioCtx.createBufferSource();
+            source.buffer = customAlarmBuffer;
+            
+            // 1. Pitch Shift (Deep Voice)
+            source.playbackRate.value = 0.65; 
+
+            // 2. Distortion (Growl)
+            const distortion = audioCtx.createWaveShaper();
+            distortion.curve = makeDistortionCurve(400); // Amount of grit
+            distortion.oversample = '4x';
+
+            // 3. Lowpass Filter (Muffle/Darkness)
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = "lowpass";
+            filter.frequency.value = 1000;
+
+            // 4. Compressor (Even out volume)
+            const compressor = audioCtx.createDynamicsCompressor();
+
+            // Connect Chain: Source -> Distortion -> Filter -> Compressor -> Out
+            source.connect(distortion);
+            distortion.connect(filter);
+            filter.connect(compressor);
+            compressor.connect(audioCtx.destination);
+
+            source.start();
+
+            // --- ATMOSPHERE (Background Rumble) ---
+            const noiseBuffer = createBrownNoise(audioCtx);
+            const noiseSource = audioCtx.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+            noiseSource.loop = true;
+            
+            // Fade noise in/out
+            const noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            noiseGain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.5); // Fade in
+
+            noiseSource.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            
+            noiseSource.start();
+            
+            // Stop noise slightly after voice finishes
+            const duration = (customAlarmBuffer.duration / 0.65);
+            noiseGain.gain.setValueAtTime(0.25, audioCtx.currentTime + duration);
+            noiseGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration + 1.0); // Fade out
+            noiseSource.stop(audioCtx.currentTime + duration + 1.0);
+        }
+
+        // Helper for distortion curve
+        function makeDistortionCurve(amount) {
+            const k = typeof amount === 'number' ? amount : 50;
+            const n_samples = 44100;
+            const curve = new Float32Array(n_samples);
+            const deg = Math.PI / 180;
+            for (let i = 0; i < n_samples; ++i) {
+                const x = i * 2 / n_samples - 1;
+                curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+            }
+            return curve;
+        }
+
+        // --- Tally Logic ---
+        function resetTally() {
+            if(confirm('Wipe the memory of these sessions?')) {
+                sessionCount = 0;
+                localStorage.setItem('strangerSessionCount', 0);
+                renderTally();
+            }
+        }
+
+        function renderTally() {
+            tallyContainer.innerHTML = '';
+            
+            // Calculate groups of 5
+            const groups = Math.floor(sessionCount / 5);
+            const remainder = sessionCount % 5;
+
+            for(let i=0; i<groups; i++) {
+                createTallyGroup(5);
+            }
+            if(remainder > 0) {
+                createTallyGroup(remainder);
+            }
+        }
+
+        function createTallyGroup(count) {
+            const group = document.createElement('div');
+            group.className = 'tally-group';
+            
+            // Add vertical marks
+            for(let i=1; i<=Math.min(count, 4); i++) {
+                let mark = document.createElement('div');
+                mark.className = `tally-mark mark-v mark-${i}`;
+                group.appendChild(mark);
+            }
+
+            // Add crossing mark if full group of 5
+            if(count === 5) {
+                let cross = document.createElement('div');
+                cross.className = `tally-mark mark-cross`;
+                group.appendChild(cross);
+            }
+
+            tallyContainer.appendChild(group);
+        }
+
+        // Listeners
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        stopBtn.addEventListener('click', stopTimer);
+        resetBtn.addEventListener('click', resetTimer);
+
+        // Inputs update display live AND reset state if changed
+        [inputHours, inputMinutes, inputBreaks].forEach(el => {
+            const resetState = () => {
+                if (!isRunning) {
+                    remainingSeconds = 0; // Force new start on next click
+                    totalTimeSeconds = 0;
+                    updateDisplayFromInputs();
+                }
+            };
+            el.addEventListener('change', resetState);
+            el.addEventListener('keyup', resetState);
+        });
+
+    </script>
+</body>
+</html>
