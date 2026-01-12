@@ -612,26 +612,30 @@
             
             bgMusic.currentTime = 0;
             bgMusic.volume = 1.0;
-            bgMusic.play().catch(e => console.log("Music play failed:", e));
+            
+            const playPromise = bgMusic.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    // Once playing, we know duration
+                    const duration = bgMusic.duration;
+                    if (!duration || !isFinite(duration)) return; // Safety check
 
-            // Start Fade Out at 6 seconds
-            musicFadeTimer = setTimeout(() => {
-                let vol = 1.0;
-                fadeInterval = setInterval(() => {
-                    vol -= 0.02; // Slow fade step
-                    if (vol <= 0) {
-                        vol = 0;
-                        clearInterval(fadeInterval);
-                    }
-                    bgMusic.volume = vol;
-                }, 80); // Updates every 80ms (approx 4 sec total fade)
-            }, 6000);
+                    // Update volume every 100ms
+                    const intervalTime = 100; 
+                    const steps = (duration * 1000) / intervalTime;
+                    const volStep = 1.0 / steps;
 
-            // Stop at 10 seconds
-            musicStopTimer = setTimeout(() => {
-                bgMusic.pause();
-                clearInterval(fadeInterval);
-            }, 10000);
+                    fadeInterval = setInterval(() => {
+                        if (bgMusic.volume > volStep) {
+                            bgMusic.volume -= volStep;
+                        } else {
+                            bgMusic.volume = 0;
+                            clearInterval(fadeInterval);
+                        }
+                    }, intervalTime);
+                }).catch(e => console.log("Music play failed:", e));
+            }
         }
 
         function stopMusicIntro() {
