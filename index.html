@@ -372,59 +372,93 @@
             20%, 24%, 55% { opacity: 0.4; }
         }
 
-        /* --- Mobile Responsiveness --- */
+        /* --- Mobile Responsiveness (The Overhaul) --- */
         @media (max-width: 600px) {
-            h1 {
-                font-size: 2rem; /* Smaller title */
-                margin-bottom: 20px;
+            /* 1. Clean up background */
+            .scanlines, .spore { display: none; } /* Disable heavy effects on mobile */
+            body { 
+                background: #000; /* Pure black is cleaner on OLED phones */
+                height: 100vh;
+                position: fixed;
+                padding: 10px;
+                box-sizing: border-box;
             }
-            
+
+            /* 2. Container takes full space */
             .container {
-                padding: 20px; /* Less padding on mobile */
-                width: 95%; /* Use more screen width */
-                border-width: 2px;
+                width: 100%;
+                height: 100%;
+                max-width: none;
+                margin: 0;
+                padding: 10px;
+                border: none; /* Remove border to save space */
+                box-shadow: none;
+                background: transparent;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between; /* Spread content out */
             }
 
-            .timer-display {
-                font-size: 18vw; /* Scales with screen width */
+            h1 {
+                font-size: 1.8rem;
                 margin: 10px 0;
+                white-space: nowrap;
             }
 
+            /* 3. Inputs: Big and Tappable */
             .input-group {
-                gap: 5px;
+                gap: 10px;
+                margin-bottom: 10px;
             }
-
             .input-group div {
                 display: flex;
                 flex-direction: column;
-                align-items: center;
             }
-
             input {
-                width: 50px;
-                font-size: 1.2rem;
+                width: 60px;
+                height: 50px; /* Big touch target */
+                font-size: 1.5rem;
+                border-width: 2px;
             }
 
-            .presets {
-                gap: 5px;
+            /* 4. Timer: Massive */
+            .timer-display {
+                font-size: 18vw;
+                margin: 10px 0;
             }
 
-            .preset-btn {
-                font-size: 0.8rem;
-                padding: 5px 10px;
-                flex-grow: 1; /* Buttons fill width */
+            /* 5. Buttons: 2x2 Grid for easy thumbs */
+            .buttons {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                padding: 10px;
+                margin-top: 10px;
+                background: transparent;
+                border: none;
+                box-shadow: none;
             }
 
             button.main-btn {
-                font-size: 1.4rem;
-                padding: 10px 20px;
-                width: 100%; /* Full width buttons for easy tapping */
+                width: 100%;
+                height: 70px; /* Big chunky buttons */
+                font-size: 2rem;
             }
 
-            .buttons {
-                flex-direction: column; /* Stack buttons vertically */
-                gap: 10px;
+            /* 6. Hide Presets on Mobile to save space (optional, or make them smaller) */
+            .presets {
+                display: none;
+            }
+
+            /* 7. Recorder fits nicely */
+            .recorder-container {
+                margin-top: 10px;
+                margin-bottom: 20px;
+            }
+            #recBtn {
                 width: 100%;
+                padding: 15px;
+                font-size: 1rem;
             }
         }
     </style>
