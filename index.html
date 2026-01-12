@@ -465,8 +465,8 @@
 </head>
 <body>
 
-    <!-- Background Music -->
-    <audio id="bgMusic" src="Stranger Synth Vibes.wav" loop></audio>
+    <!-- Background Music (No Loop) -->
+    <audio id="bgMusic" src="Stranger Synth Vibes.wav"></audio>
 
     <div class="scanlines"></div>
     <div id="sporeContainer"></div>
@@ -569,6 +569,11 @@
         let timerInterval = null;
         let isRunning = false;
         let expectedEndTime = 0; 
+        
+        // Music Timers
+        let musicFadeTimer = null;
+        let musicStopTimer = null;
+        let fadeInterval = null;
 
         // Load saved session count
         let sessionCount = parseInt(localStorage.getItem('strangerSessionCount') || '0');
@@ -598,6 +603,44 @@
             gain.connect(audioCtx.destination);
             osc.start();
             osc.stop(audioCtx.currentTime + dur);
+        }
+
+        // --- Music Control ---
+        function playMusicIntro() {
+            // Reset logic
+            stopMusicIntro(); 
+            
+            bgMusic.currentTime = 0;
+            bgMusic.volume = 1.0;
+            bgMusic.play().catch(e => console.log("Music play failed:", e));
+
+            // Start Fade Out at 6 seconds
+            musicFadeTimer = setTimeout(() => {
+                let vol = 1.0;
+                fadeInterval = setInterval(() => {
+                    vol -= 0.02; // Slow fade step
+                    if (vol <= 0) {
+                        vol = 0;
+                        clearInterval(fadeInterval);
+                    }
+                    bgMusic.volume = vol;
+                }, 80); // Updates every 80ms (approx 4 sec total fade)
+            }, 6000);
+
+            // Stop at 10 seconds
+            musicStopTimer = setTimeout(() => {
+                bgMusic.pause();
+                clearInterval(fadeInterval);
+            }, 10000);
+        }
+
+        function stopMusicIntro() {
+            clearTimeout(musicFadeTimer);
+            clearTimeout(musicStopTimer);
+            clearInterval(fadeInterval);
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+            bgMusic.volume = 1.0; 
         }
 
         function applyPreset(h, m, b) {
@@ -650,8 +693,9 @@
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume().catch(e => console.log(e));
             }
-
-            bgMusic.play().catch(e => console.log("Music error:", e));
+            
+            // Play Intro Music
+            playMusicIntro();
 
             if (!isRunning) {
                 if (remainingSeconds === 0) {
@@ -720,7 +764,7 @@
             startBtn.disabled = false;
             startBtn.textContent = "RESUME";
             pauseBtn.disabled = true;
-            bgMusic.pause();
+            stopMusicIntro(); // Stop music immediately on pause
         }
 
         function finishTimer() {
@@ -729,9 +773,8 @@
             updateDisplay();
             progressBar.style.width = '100%'; // Full bar on completion
             
-            bgMusic.pause();
-            bgMusic.currentTime = 0;
-
+            stopMusicIntro(); // Stop music if still playing
+            
             // Play Alarm (Custom Monster or Default Synth)
             if (customAlarmBuffer) {
                 playMonsterAudio();
@@ -758,8 +801,7 @@
 
         function stopTimer() {
             pauseTimer();
-            bgMusic.pause();
-            bgMusic.currentTime = 0;
+            stopMusicIntro();
 
             // Reset to the beginning of the CURRENT session
             if (totalTimeSeconds > 0) {
@@ -787,8 +829,7 @@
 
         function resetTimer() {
             pauseTimer();
-            bgMusic.pause();
-            bgMusic.currentTime = 0;
+            stopMusicIntro();
 
             remainingSeconds = 0;
             totalTimeSeconds = 0;
