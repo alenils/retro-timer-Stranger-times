@@ -613,27 +613,37 @@
             bgMusic.currentTime = 0;
             bgMusic.volume = 1.0;
             
+            const startFade = () => {
+                let duration = bgMusic.duration;
+                // Fallback if metadata not loaded or infinite (stream)
+                if (!duration || !isFinite(duration) || duration === 0) {
+                    duration = 180; // Default to 3 mins if unknown
+                }
+
+                // Update volume every 100ms
+                const intervalTime = 100; 
+                const steps = (duration * 1000) / intervalTime;
+                const volStep = 1.0 / steps;
+
+                fadeInterval = setInterval(() => {
+                    if (bgMusic.volume > volStep) {
+                        bgMusic.volume -= volStep;
+                    } else {
+                        bgMusic.volume = 0;
+                        clearInterval(fadeInterval);
+                    }
+                }, intervalTime);
+            };
+
             const playPromise = bgMusic.play();
-            
             if (playPromise !== undefined) {
                 playPromise.then(() => {
-                    // Once playing, we know duration
-                    const duration = bgMusic.duration;
-                    if (!duration || !isFinite(duration)) return; // Safety check
-
-                    // Update volume every 100ms
-                    const intervalTime = 100; 
-                    const steps = (duration * 1000) / intervalTime;
-                    const volStep = 1.0 / steps;
-
-                    fadeInterval = setInterval(() => {
-                        if (bgMusic.volume > volStep) {
-                            bgMusic.volume -= volStep;
-                        } else {
-                            bgMusic.volume = 0;
-                            clearInterval(fadeInterval);
-                        }
-                    }, intervalTime);
+                    // Check if ready, otherwise wait
+                    if (bgMusic.readyState >= 1) {
+                        startFade();
+                    } else {
+                        bgMusic.onloadedmetadata = startFade;
+                    }
                 }).catch(e => console.log("Music play failed:", e));
             }
         }
